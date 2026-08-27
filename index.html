@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZVIEW.AIR — Fine Art Prints</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Neue+Haas+Grotesk+Display+Pro:wght@400;500&family=Space+Mono&display=swap" rel="stylesheet">
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f3ef;
+    --warm: #e8e3d8;
+    --accent: #c4a882;
+    --ocean: #1a3a4a;
+    --sand: #b8a48c;
+    --mist: #d4cfc6;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(196,168,130,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  @media (pointer: coarse) {
+    .cursor, .cursor-ring { display: none; }
+    body, a, button, input, select, textarea { cursor: auto; }
+    /* En touch no existe :hover, así que el overlay queda siempre visible */
+    .product-overlay { opacity: 1; }
+    .product-name, .product-meta, .product-cta { transform: translateY(0); }
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 28px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    mix-blend-mode: normal;
+  }
+  nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(10,10,10,0.95) 0%, transparent 100%);
+    pointer-events: none;
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--white);
+    text-decoration: none;
+    position: relative;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+    position: relative;
+  }
+  .nav-links a {
+    color: var(--mist);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+    font-weight: 400;
+    transition: color 0.3s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: none;
+    position: relative;
+    z-index: 101;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: var(--white);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-toggle.open span:nth-child(2) { opacity: 0; }
+  .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .nav-mobile {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(10,10,10,0.98);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 36px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-16px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .nav-mobile.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .nav-mobile a {
+    color: var(--mist);
+    text-decoration: none;
+    font-size: 26px;
+    font-weight: 300;
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    letter-spacing: 0.02em;
+    transition: color 0.3s;
+  }
+  .nav-mobile a:hover { color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    height: 100vh;
+    height: 100svh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 80px 48px 0;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 80% 60% at 60% 40%, rgba(26,58,74,0.6) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 20% 70%, rgba(196,168,130,0.12) 0%, transparent 60%),
+      var(--black);
+  }
+
+  /* Fake aerial photo mosaic background */
+  .hero-mosaic {
+    position: absolute;
+    inset: 0;
+    opacity: 0.18;
+    background: 
+      linear-gradient(135deg, #1a6e8a 0%, #0d4a5a 20%, #2a5f3a 35%, #b8a060 50%, #c84a20 65%, #1a3a8a 80%, #0a2a4a 100%);
+    filter: blur(0px);
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, 
+      rgba(10,10,10,0.3) 0%,
+      rgba(10,10,10,0.1) 40%,
+      rgba(10,10,10,0.7) 80%,
+      rgba(10,10,10,0.95) 100%);
+  }
+
+  /* Animated grid lines */
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(196,168,130,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(196,168,130,0.04) 1px, transparent 1px);
+    background-size: 80px 80px;
+    animation: gridMove 20s linear infinite;
+  }
+  @keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 80px 80px; }
+  }
+
+  .hero-content {
+    position: relative;
+    max-width: 900px;
+  }
+
+  .hero-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.3s forwards;
+  }
+
+  .hero-title {
+    font-size: clamp(56px, 9vw, 120px);
+    font-weight: 300;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 1.2s ease 0.5s forwards;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--accent);
+    display: block;
+  }
+
+  .hero-desc {
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--mist);
+    max-width: 480px;
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.8s forwards;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    opacity: 0;
+    animation: fadeUp 1s ease 1s forwards;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--black);
+    padding: 16px 40px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+  }
+  .btn-primary:hover {
+    background: var(--white);
+    transform: translateY(-2px);
+  }
+
+  .btn-ghost {
+    color: var(--mist);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 2px;
+    transition: all 0.3s;
+  }
+  .btn-ghost:hover { color: var(--accent); border-color: var(--accent); }
+
+  .hero-stats {
+    position: absolute;
+    right: 48px;
+    bottom: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    text-align: right;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.2s forwards;
+  }
+  .stat-num {
+    font-size: 36px;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--white);
+  }
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--sand);
+    margin-top: 4px;
+  }
+  .stat-ig {
+    display: block;
+    text-decoration: none;
+    transition: opacity 0.3s;
+  }
+  .stat-ig:hover { opacity: 0.75; }
+  .stat-ig .stat-num, .stat-ig .stat-label { transition: color 0.3s; }
+  .stat-ig:hover .stat-num, .stat-ig:hover .stat-label { color: var(--accent); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* PRODUCTS */
+  .products {
+    padding: 0 48px 120px;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 64px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .section-title {
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .section-title em { font-style: italic; color: var(--accent); }
+  .section-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--sand);
+    letter-spacing: 0.2em;
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+
+  .product-card {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    cursor: none;
+  }
+
+  .product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* Aerial photo simulations using CSS gradients */
+  .aerial-1 { background: linear-gradient(145deg, #1a6e8a 0%, #0d4a5a 30%, #2a7a5a 60%, #4a9a6a 100%); }
+  .aerial-2 { background: linear-gradient(160deg, #c4824a 0%, #b87640 30%, #9a6030 60%, #d4a060 100%); }
+  .aerial-3 { background: linear-gradient(120deg, #1a2a5a 0%, #2a4a8a 30%, #1a6a9a 60%, #0a3a6a 100%); }
+  .aerial-4 { background: linear-gradient(135deg, #4a8a5a 0%, #3a7a4a 30%, #2a9a3a 50%, #6ab47a 100%); }
+  .aerial-5 { background: linear-gradient(150deg, #8a6a4a 0%, #b4905a 30%, #c8a870 60%, #a07840 100%); }
+  .aerial-6 { background: linear-gradient(125deg, #1a4a6a 0%, #0a2a4a 30%, #2a6a9a 60%, #1a5a7a 100%); }
+
+  .product-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10,10,10,0.95) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 28px;
+  }
+
+  .product-card:hover .product-overlay { opacity: 1; }
+  .product-card:hover .product-img { transform: scale(1.06); }
+
+  .product-name {
+    font-size: 20px;
+    font-weight: 300;
+    font-style: italic;
+    margin-bottom: 8px;
+    transform: translateY(10px);
+    transition: transform 0.4s ease;
+  }
+  .product-card:hover .product-name { transform: translateY(0); }
+
+  .product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transform: translateY(10px);
+    transition: transform 0.4s ease 0.05s;
+  }
+  .product-card:hover .product-meta { transform: translateY(0); }
+
+  .product-size {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--sand);
+    text-transform: uppercase;
+  }
+  .product-price {
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--accent);
+  }
+
+  .product-cta {
+    margin-top: 12px;
+    display: block;
+    text-align: center;
+    background: rgba(196,168,130,0.15);
+    border: 1px solid rgba(196,168,130,0.4);
+    color: var(--accent);
+    padding: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.3s;
+    transform: translateY(10px);
+    transition: all 0.4s ease 0.1s;
+  }
+  .product-card:hover .product-cta { transform: translateY(0); }
+  .product-cta:hover { background: var(--accent); color: var(--black); }
+
+  /* FEATURE LARGE CARD */
+  .feature-card {
+    grid-column: 1 / 3;
+    aspect-ratio: 2/1;
+  }
+
+  /* FORMATS */
+  .formats {
+    padding: 120px 48px;
+    background: rgba(255,255,255,0.02);
+    border-top: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .formats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-top: 64px;
+  }
+  .format-item {
+    padding: 48px 32px;
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .format-item::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    transform-origin: left;
+  }
+  .format-item:hover::before { transform: scaleX(1); }
+  .format-item:hover { background: rgba(196,168,130,0.04); }
+
+  .format-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.3em;
+    margin-bottom: 32px;
+  }
+  .format-size {
+    font-size: 36px;
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .format-cm {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--sand);
+    letter-spacing: 0.2em;
+    margin-bottom: 24px;
+  }
+  .format-desc {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--mist);
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+  .format-price {
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--white);
+  }
+  .format-price span {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--sand);
+    letter-spacing: 0.2em;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* PROCESS */
+  .process {
+    padding: 120px 48px;
+  }
+  .process-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 64px;
+    margin-top: 80px;
+  }
+  .process-step { }
+  .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 60px;
+    font-weight: 400;
+    color: rgba(196,168,130,0.15);
+    line-height: 1;
+    margin-bottom: 24px;
+  }
+  .step-title {
+    font-size: 24px;
+    font-weight: 300;
+    font-style: italic;
+    margin-bottom: 16px;
+    color: var(--white);
+  }
+  .step-desc {
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--mist);
+  }
+
+  /* ABOUT */
+  .about {
+    padding: 120px 48px;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 80px;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .about-photo {
+    position: relative;
+    aspect-ratio: 4/5;
+    overflow: hidden;
+  }
+  .about-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.6) contrast(1.05);
+    transition: filter 0.6s ease;
+  }
+  .about-photo:hover img {
+    filter: grayscale(0) contrast(1.05);
+  }
+  .about-name {
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .about-name em { font-style: italic; color: var(--accent); }
+  .about-role {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--sand);
+    margin-bottom: 32px;
+  }
+  .about-bio {
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--mist);
+    max-width: 560px;
+  }
+  .about-bio strong {
+    font-weight: 400;
+    color: var(--white);
+  }
+
+  /* CUSTOM ORDER */
+  .custom {
+    margin: 0 48px 120px;
+    border: 1px solid rgba(196,168,130,0.2);
+    padding: 80px;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 80px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .custom::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(26,58,74,0.4) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .custom-title {
+    font-size: clamp(36px, 4vw, 56px);
+    font-weight: 300;
+    line-height: 1.1;
+    margin-bottom: 24px;
+  }
+  .custom-title em { font-style: italic; color: var(--accent); }
+  .custom-desc {
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--mist);
+    margin-bottom: 40px;
+  }
+  .custom-form { display: flex; flex-direction: column; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--sand);
+  }
+  .form-input, .form-select {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--white);
+    padding: 14px 16px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 300;
+    outline: none;
+    transition: border-color 0.3s;
+    width: 100%;
+    cursor: none;
+  }
+  .form-input:focus, .form-select:focus {
+    border-color: var(--accent);
+  }
+  .form-select { appearance: none; }
+  option { background: #1a1a1a; }
+  .form-btn {
+    background: var(--accent);
+    color: var(--black);
+    border: none;
+    padding: 18px 32px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: none;
+    transition: all 0.3s;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .form-btn:hover {
+    background: var(--white);
+    letter-spacing: 0.35em;
+  }
+
+  .form-btn-wa {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 8px;
+    padding: 18px 32px;
+    border: 1px solid rgba(37,211,102,0.4);
+    color: #25d366;
+    background: rgba(37,211,102,0.06);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.3s;
+    cursor: none;
+  }
+  /* BOTÓN FLOTANTE WHATSAPP */
+  .wa-fab {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    z-index: 90;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #25d366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    cursor: none;
+    transition: transform 0.3s ease;
+  }
+  .wa-fab:hover { transform: scale(1.08); }
+  .wa-fab svg { width: 28px; height: 28px; fill: #0a0a0a; }
+  .wa-fab::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #25d366;
+    opacity: 0.5;
+    animation: waPulse 2.2s ease-out infinite;
+  }
+  @keyframes waPulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  @media (max-width: 900px) {
+    .wa-fab { right: 20px; bottom: 20px; width: 52px; height: 52px; }
+    .wa-fab svg { width: 25px; height: 25px; }
+  }
+
+  .form-btn-wa:hover {
+    background: rgba(37,211,102,0.15);
+    border-color: rgba(37,211,102,0.7);
+    letter-spacing: 0.35em;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 64px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-logo {
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--mist);
+  }
+  .footer-logo span { color: var(--accent); }
+  .footer-tagline {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+  .footer-right {
+    text-align: right;
+  }
+  .footer-ig {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--sand);
+    letter-spacing: 0.2em;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  .footer-ig:hover { color: var(--accent); }
+  .footer-copy {
+    font-size: 12px;
+    color: rgba(255,255,255,0.2);
+    margin-top: 8px;
+  }
+
+  /* SCROLL INDICATOR */
+  .scroll-indicator {
+    position: absolute;
+    right: 48px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.5s forwards;
+  }
+  .scroll-line {
+    width: 1px;
+    height: 80px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(1); }
+    50% { opacity: 1; transform: scaleY(1.1); }
+  }
+  .scroll-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    nav { padding: 24px; }
+    .nav-links { display: none; }
+    .nav-toggle { display: flex; }
+    .hero { padding: 0 24px 60px; }
+    .hero-stats {
+      left: 24px;
+      right: 24px;
+      bottom: 24px;
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 20px;
+      text-align: left;
+    }
+    .stat-num { font-size: 26px; }
+    .scroll-indicator { display: none; }
+    .products { padding: 0 24px 80px; }
+    .products-grid { grid-template-columns: repeat(2, 1fr); }
+    .feature-card { grid-column: 1 / 3; }
+    .formats { padding: 80px 24px; }
+    .formats-grid { grid-template-columns: repeat(2, 1fr); }
+    .process { padding: 80px 24px; }
+    .process-grid { grid-template-columns: 1fr; gap: 40px; }
+    .about { grid-template-columns: 1fr; gap: 40px; padding: 80px 24px; }
+    .about-photo { max-width: 320px; margin: 0 auto; }
+    .custom { margin: 0 24px 80px; padding: 48px 32px; grid-template-columns: 1fr; gap: 40px; }
+    footer { flex-direction: column; gap: 32px; text-align: center; padding: 48px 24px; }
+    .footer-right { text-align: center; }
+  }
+
+  @media (max-width: 480px) {
+    .hero-desc { font-size: 16px; }
+    .hero-cta { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .products-grid { grid-template-columns: 1fr; }
+    .feature-card { grid-column: 1 / 2; }
+    .formats-grid { grid-template-columns: 1fr; }
+    .custom { padding: 40px 24px; }
+    .section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <a href="#" class="nav-logo">Z<span>VIEW</span>.AIR</a>
+  <ul class="nav-links">
+    <li><a href="#coleccion">Colección</a></li>
+    <li><a href="#formatos">Formatos</a></li>
+    <li><a href="#proceso">Proceso</a></li>
+    <li><a href="#sobre-mi">Sobre mí</a></li>
+    <li><a href="#encargo">Encargar</a></li>
+  </ul>
+  <button class="nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="nav-mobile" id="navMobile">
+  <a href="#coleccion">Colección</a>
+  <a href="#formatos">Formatos</a>
+  <a href="#proceso">Proceso</a>
+  <a href="#sobre-mi">Sobre mí</a>
+  <a href="#encargo">Encargar</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-mosaic"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-grid"></div>
+
+  <div class="hero-content">
+    <p class="hero-label">Fine Art Prints · Top-down desde el sur del mundo</p>
+    <h1 class="hero-title">
+      La tierra<br>
+      <em>desde arriba.</em>
+    </h1>
+    <p class="hero-desc">
+      Fotografía aérea cenital de geometrías naturales, costas, y patrones abstractos del territorio. Impresión giclée de archivos de alta resolución, enmarcadas a medida.
+    </p>
+    <div class="hero-cta">
+      <a href="#coleccion" class="btn-primary">Ver colección</a>
+      <a href="#encargo" class="btn-ghost">Encargo personalizado →</a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div>
+      <div class="stat-num">32</div>
+      <div class="stat-label">Obras disponibles</div>
+    </div>
+    <a href="https://instagram.com/zview.air" target="_blank" class="stat-ig">
+      <div class="stat-num">4K+</div>
+      <div class="stat-label">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" style="vertical-align:-2px; margin-right:4px;"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        Seguidores
+      </div>
+    </a>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">Scroll</span>
+  </div>
+</section>
+
+<!-- PRODUCTOS -->
+<section class="products" id="coleccion">
+  <div class="section-header">
+    <h2 class="section-title">Colección<br><em>actual</em></h2>
+    <span class="section-count">32 obras · Edición limitada</span>
+  </div>
+
+  <div class="products-grid">
+
+    <div class="product-card feature-card" data-product="transbordador-niebla">
+      <img class="product-img" src="images/transbordador_niebla.jpg" style="width:100%; height:100%; object-fit:cover; object-position:center;" alt="Transbordador · Niebla">
+      <div class="product-overlay">
+        <div class="product-name">Transbordador · Niebla</div>
+        <div class="product-meta">
+          <span class="product-size">60 × 90 cm · Edición 1/10</span>
+        </div>
+        <a href="detalle.html?id=transbordador-niebla" class="product-cta">Ver detalle</a>
+      </div>
+    </div>
+
+    <div class="product-card" data-product="laguna-cejar">
+      <img class="product-img" src="images/laguna_cejar.jpg" style="width:100%; height:100%; object-fit:cover;" alt="Laguna Cejar">
+      <div class="product-overlay">
+        <div class="product-name">Laguna Cejar</div>
+        <div class="product-meta">
+          <span class="product-size">50 × 50 cm · Ed. 1/10</span>
+        </div>
+        <a href="detalle.html?id=laguna-cejar" class="product-cta">Ver detalle</a>
+      </div>
+    </div>
+
+    <div class="product-card" data-product="ojo-de-cejar">
+      <img class="product-img" src="images/ojo_de_cejar.jpg" style="width:100%; height:100%; object-fit:cover;" alt="Ojo de Cejar">
+      <div class="product-overlay">
+        <div class="product-name">Ojo de Cejar</div>
+        <div class="product-meta">
+          <span class="product-size">40 × 60 cm · Ed. 1/10</span>
+        </div>
+        <a href="detalle.html?id=ojo-de-cejar" class="product-cta">Ver detalle</a>
+      </div>
+    </div>
+
+    <div class="product-card" data-product="tongoy-uno">
+      <img class="product-img" src="images/Tongoy_uno.jpg" style="width:100%; height:100%; object-fit:cover;" alt="Tongoy Uno">
+      <div class="product-overlay">
+        <div class="product-name">Tongoy · Uno</div>
+        <div class="product-meta">
+          <span class="product-size">50 × 50 cm · Ed. 1/10</span>
+        </div>
+        <a href="detalle.html?id=tongoy-uno" class="product-cta">Ver detalle</a>
+      </div>
+    </div>
+
+    <div class="product-card" data-product="tongoy-varios">
+      <img class="product-img" src="images/Tongoy_varios.jpg" style="width:100%; height:100%; object-fit:cover;" alt="Tongoy Varios">
+      <div class="product-overlay">
+        <div class="product-name">Tongoy · Varios</div>
+        <div class="product-meta">
+          <span class="product-size">40 × 60 cm · Ed. 1/10</span>
+        </div>
+        <a href="detalle.html?id=tongoy-varios" class="product-cta">Ver detalle</a>
+      </div>
+    </div>
+
+    <div class="product-card" data-product="muelle-valdivia">
+      <img class="product-img" src="images/muelle_valdivia.jpg" style="width:100%; height:100%; object-fit:cover;" alt="Muelle Valdivia">
+      <div class="product-overlay">
+        <div class="product-name">Muelle Valdivia</div>
+        <div class="product-meta">
+          <span class="product-size">60 × 90 cm · Ed. 1/10</span>
+        </div>
+        <a href="detalle.html?id=muelle-valdivia" class="product-cta">Ver detalle</a>
+      </div>
+    </div>
+
+    <div class="product-card" data-product="ojos-del-salado">
+      <img class="product-img" src="images/ojos_del_salado.jpg" style="width:100%; height:100%; object-fit:cover;" alt="Ojos del Salado">
+      <div class="product-overlay">
+        <div class="product-name">Ojos del Salado</div>
+        <div class="product-meta">
+          <span class="product-size">50 × 50 cm · Ed. 1/10</span>
+        </div>
+        <a href="detalle.html?id=ojos-del-salado" class="product-cta">Ver detalle</a>
+      </div>
+    </div>
+
+    <div class="product-card" data-product="la-boca">
+      <img class="product-img" src="images/la_boca.jpg" style="width:100%; height:100%; object-fit:cover;" alt="La Boca">
+      <div class="product-overlay">
+        <div class="product-name">La Boca</div>
+        <div class="product-meta">
+          <span class="product-size">50 × 50 cm · Ed. 1/10</span>
+        </div>
+        <a href="detalle.html?id=la-boca" class="product-cta">Ver detalle</a>
+      </div>
+    </div>
+
+    <div class="product-card" data-product="mar-la-boca">
+      <img class="product-img" src="images/mar_la_boca.jpg" style="width:100%; height:100%; object-fit:cover;" alt="Mar La Boca">
+      <div class="product-overlay">
+        <div class="product-name">Mar · La Boca</div>
+        <div class="product-meta">
+          <span class="product-size">40 × 60 cm · Ed. 1/10</span>
+        </div>
+        <a href="detalle.html?id=mar-la-boca" class="product-cta">Ver detalle</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FORMATOS -->
+<section class="formats" id="formatos">
+  <div class="section-header">
+    <h2 class="section-title">Formatos<br><em>& precios</em></h2>
+    <span class="section-count">Impresión giclée · Marco incluido</span>
+  </div>
+
+  <div class="formats-grid">
+    <div class="format-item">
+      <div class="format-number">01 ·</div>
+      <div class="format-size">32 × 32</div>
+      <div class="format-cm">cm · Cuadrado</div>
+      <p class="format-desc">Ideal para composiciones simétricas y patrones abstractos. Marco de aluminio negro mate.</p>
+      <div class="format-price">
+        <span>desde</span>
+        CLP $60.000
+      </div>
+    </div>
+    <div class="format-item">
+      <div class="format-number">02 ·</div>
+      <div class="format-size">40 × 50</div>
+      <div class="format-cm">cm · Vertical / Horizontal</div>
+      <p class="format-desc">El formato más versátil. Equilibrio entre impacto y precio. Papel Canson Baryta.</p>
+      <div class="format-price">
+        <span>desde</span>
+        CLP $85.000
+      </div>
+    </div>
+    <div class="format-item">
+      <div class="format-number">03 ·</div>
+      <div class="format-size">50 × 70</div>
+      <div class="format-cm">cm · Gran formato</div>
+      <p class="format-desc">Presencia máxima. Ideal para espacios residenciales o corporativos. Marco de roble natural o negro.</p>
+      <div class="format-price">
+        <span>desde</span>
+        CLP $145.000
+      </div>
+    </div>
+    <div class="format-item">
+      <div class="format-number">04 ·</div>
+      <div class="format-size">Encargo</div>
+      <div class="format-cm">Formato a medida</div>
+      <p class="format-desc">Formatos personalizados hasta 100 cm. Incluye asesoría de imagen y coordinación de envío.</p>
+      <div class="format-price">
+        <span>cotizar</span>
+        A medida
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESO -->
+<section class="process" id="proceso">
+  <div class="section-header">
+    <h2 class="section-title">Cómo<br><em>funciona</em></h2>
+    <span class="section-count">Entrega en 10–15 días hábiles</span>
+  </div>
+
+  <div class="process-grid">
+    <div class="process-step">
+      <div class="step-num">01</div>
+      <div class="step-title">Elige tu imagen</div>
+      <p class="step-desc">Selecciona de la colección disponible en Instagram o solicita acceso al catálogo completo de archivos inéditos. También acepto encargos de imágenes específicas de tu región.</p>
+    </div>
+    <div class="process-step">
+      <div class="step-num">02</div>
+      <div class="step-title">Definimos el formato</div>
+      <p class="step-desc">Te asesoro en el tamaño óptimo según tu espacio. Todos los prints incluyen marco seleccionado por mí para la obra, papel Canson Baryta 310g y embalaje de protección profesional.</p>
+    </div>
+    <div class="process-step">
+      <div class="step-num">03</div>
+      <div class="step-title">Producción & envío</div>
+      <p class="step-desc">Impresión en laboratorio certificado en Santiago. Envío a domicilio en toda Chile con seguro de transporte. Despacho internacional disponible bajo cotización.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SOBRE MÍ -->
+<section class="about" id="sobre-mi">
+  <div class="about-photo">
+    <img src="images/felipe.png" alt="Felipe Sepúlveda">
+  </div>
+  <div>
+    <h2 class="about-name">Felipe <em>Sepúlveda</em></h2>
+    <p class="about-role">Diseñador gráfico · Fotógrafo · Piloto de dron</p>
+    <p class="about-bio">
+      Diseñador gráfico de profesión, fotógrafo callejero por pasión, explorador aéreo por curiosidad. <strong>ZVIEW.AIR</strong> nació de una pregunta simple: ¿cómo se ve el mundo cuando cambiamos el ángulo?
+    </p>
+    <p class="about-bio" style="margin-top: 20px;">
+      Mi ojo de diseñador busca composición, balance y orden; mi dron me da la perspectiva para encontrarlos donde nadie más mira. Cada imagen es el resultado de esa mezcla: piezas de arte fino para quienes ven belleza en los patrones que la vida cotidiana esconde desde arriba.
+    </p>
+  </div>
+</section>
+
+<!-- ENCARGO PERSONALIZADO -->
+<section class="custom" id="encargo">
+  <div>
+    <h2 class="custom-title">Encargo<br><em>personalizado</em></h2>
+    <p class="custom-desc">
+      ¿Tienes una imagen específica en mente, un espacio particular, o quieres una fotografía aérea de tu ciudad o territorio? Cuéntame lo que necesitas.
+    </p>
+    <p style="font-size: 14px; color: var(--mist); font-weight: 300; line-height: 1.7;">
+      También ofrezco <strong style="color: var(--accent); font-weight: 400;">prints para empresas</strong>: lobbies, salas de reuniones, hoteles. Cotización especial para pedidos de 3 o más obras.
+    </p>
+  </div>
+  <div>
+    <form class="custom-form" onsubmit="handleSubmit(event)">
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-input" placeholder="Tu nombre">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contacto (email o Instagram)</label>
+        <input type="text" class="form-input" placeholder="@usuario o email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">¿Qué buscas?</label>
+        <select class="form-select">
+          <option value="">Selecciona una opción</option>
+          <option>Print de colección existente</option>
+          <option>Formato personalizado</option>
+          <option>Encargo para empresa / espacio</option>
+          <option>Fotografía aérea de mi territorio</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mensaje (opcional)</label>
+        <input type="text" class="form-input" placeholder="Medidas, espacio, imagen que te interesa...">
+      </div>
+      <button type="submit" class="form-btn">Enviar consulta</button>
+      <div style="text-align:center; margin-top: 16px; color: var(--mist); font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.3em;">— o —</div>
+      <a href="https://wa.me/56988078398?text=Hola%2C%20me%20interesa%20una%20print" target="_blank" class="form-btn-wa">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Contactar por WhatsApp
+      </a>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="footer-logo">Z<span>VIEW</span>.AIR</div>
+    <div class="footer-tagline" style="margin-top: 8px;">Fine Art Aerial Photography · Chile 🇨🇱</div>
+  </div>
+  <div class="footer-right">
+    <a href="https://instagram.com/zview.air" class="footer-ig" target="_blank">@zview.air</a>
+    <div class="footer-copy">© 2025 Felipe Sepúlveda. Todos los derechos reservados.</div>
+  </div>
+</footer>
+
+<a href="https://wa.me/56988078398?text=Hola%2C%20me%20interesa%20una%20print" target="_blank" class="wa-fab" aria-label="Conversar por WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<script>
+  // Menú móvil
+  const navToggle = document.getElementById('navToggle');
+  const navMobile = document.getElementById('navMobile');
+  function closeMobileNav() {
+    navToggle.classList.remove('open');
+    navMobile.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+  navToggle.addEventListener('click', () => {
+    const isOpen = !navMobile.classList.contains('open');
+    navToggle.classList.toggle('open', isOpen);
+    navMobile.classList.toggle('open', isOpen);
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  });
+  navMobile.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileNav));
+
+  // Navegación a detalle al hacer click en la tarjeta
+  document.querySelectorAll('.product-card[data-product]').forEach(card => {
+    card.addEventListener('click', e => {
+      if (!e.target.closest('a')) {
+        window.location.href = 'detalle.html?id=' + card.dataset.product;
+      }
+    });
+  });
+
+  // Custom cursor (mouse-only devices)
+  if (!window.matchMedia('(pointer: coarse)').matches) {
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx - 4 + 'px';
+    cursor.style.top = my - 4 + 'px';
+  });
+
+  function animRing() {
+    rx += (mx - rx - 18) * 0.12;
+    ry += (my - ry - 18) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+
+  document.querySelectorAll('a, button, .product-card, .format-item').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.transform = 'scale(2.5)';
+      ring.style.transform = 'scale(1.5)';
+      ring.style.borderColor = 'rgba(196,168,130,0.8)';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.transform = 'scale(1)';
+      ring.style.transform = 'scale(1)';
+      ring.style.borderColor = 'rgba(196,168,130,0.5)';
+    });
+  });
+  } // end pointer: coarse check
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.format-item, .process-step, .product-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+    observer.observe(el);
+  });
+
+  // Form handler (mock)
+  function handleSubmit(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('.form-btn');
+    btn.textContent = '✓ Enviado — Te contactaré pronto';
+    btn.style.background = 'var(--ocean)';
+    btn.style.color = 'var(--white)';
+    btn.style.letterSpacing = '0.15em';
+  }
+</script>
+
+</body>
+</html>
